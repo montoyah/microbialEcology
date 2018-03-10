@@ -9,12 +9,12 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Before starting 
+### Before starting 
 
 * DADA2 takes demultiplexed an cleansed (primers, barcodes removed) data. Go to <http://benjjneb.github.io/dada2/tutorial.html> for more information and installation instructions.
 
 
-## Saving sessionn and individual objects
+### Saving sessionn and individual objects
 
 Analysis of big datasets can take several hours (even days) depending on the computational resources available. As R (as any othe software) can uxpectedly crash, it is a good idea to use the `save.image()` function to create restatouration points (bakcups) of the seesion during different stages of the analysis. In particular, adding `save.image()` after runnind `dada()`, `assignTaxonomy()`, and after construting a pyogenetic tree is advisable based on how long these functions can take to run. Consider adding date and a=giveing a meaningful name to the session to save for future reference. Saved sessions can be loaded afterwards via `loadRSD()`
 
@@ -27,7 +27,7 @@ Individual objects, like dataframes and graphics, can be individualy saved. See 
 ?readRDS
 ```
 
-## Getting environment ready
+### Getting environment ready
 
 ```{r}
 rm(list=ls(all=T))
@@ -36,7 +36,7 @@ source("http://bioconductor.org/biocLite.R")
 # If during package installation you get "Warning message: installed directory not writable, cannot update packages", run R as sudo and then biocLite("BiocUpgrade")
 ```
 
-### Some dependencies conflicts and errors may appear during packages installation. Follow the troubleshooting steps listed below, if needed.
+#### Some dependencies conflicts and errors may appear during packages installation. Follow the troubleshooting steps listed below, if needed.
 ```{r}
 
 #biocLite(suppressUpdates = FALSE)
@@ -65,7 +65,7 @@ Run the following two lines in shell if can't install "devtools" package (http:/
 ```
 
 
-## Load packages:
+### Load packages:
 
 ```{r}
 #install.packages('devtools')
@@ -84,7 +84,7 @@ library(dplyr); packageVersion("dplyr")
 ```
 
 
-## Calling fastq files to start analysis
+### Calling fastq files to start analysis
 ```{r}
 
 path <-'path/to/Files/fastq/'
@@ -107,7 +107,7 @@ fnFs <- paste0(path, fnFs)
 fnRs <- paste0(path, fnRs)
 ```
 
-## Quality of the reads
+### Quality check
 ```{r, eval=FALSE}
 
 plotQualityProfile(fnFs[[1]]) + ggtitle('Forward')
@@ -127,7 +127,7 @@ for (fnR in fnRs){
 ```
 
 
-## Filtering and trimming
+### Filtering and trimming
 According to Xiaoli, doing merging of the reads before filtering and trimming avoids having to define how many nuceleotides to cut, based on the quality plots (DADA2 way is, first trimming and filtering, then merging.). Xiaoli does contol during the merging step by the number of errors allowed during the overlap. 
 
 ```{r}
@@ -148,11 +148,9 @@ for(i in seq_along(fnFs)) {
                     
 }
 
-
-
 ```
 
-## Deriplicating the filtered (reduce computational time)
+### Deriplicating the filtered (reduce computational time)
 ```{r}
 
 derepFs <- derepFastq(filtFs, verbose=TRUE)
@@ -169,7 +167,7 @@ derepFs[[1]]
 ```
 
 
-## Sample inference
+### Sample inference
 ```{r}
 
 dadaFs <- dada(derepFs, err=NULL, selfConsist = TRUE, pool = TRUE, multithread = TRUE) #err=inflateErr(tperr1,3)
@@ -182,7 +180,7 @@ plotErrors(dadaFs[[1]], nominalQ=TRUE)
 
 ```
 
-## Merge of pair reads
+### Merge of pair reads
 
 ```{r}
 
@@ -191,7 +189,7 @@ mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE, minOverlap
 head(mergers[[1]])
 ```
 
-## Constructing a sequence table
+### Constructing a sequence table
 
 ```{r}
 
@@ -202,7 +200,7 @@ table(nchar(colnames(seqtab)))
 
 ```
 
-## Chimeras removal
+### Chimeras removal
 
 ```{r}
 
@@ -212,11 +210,11 @@ sum(seqtab.nochim)/sum(seqtab) # Inference the percentage of chimeras
 
 ```
 
-## Assign taxonomy
+### Assign taxonomy
 
 Adjust the code below according to the database of your prerence. Trained dataset can be downloaded from <http://benjjneb.github.io/dada2/training.html>.
 
-### For use with RDP or SIlva: 
+#### For use with RDP or SIlva: 
 ```{r}
 
 
@@ -228,7 +226,7 @@ class(taxa)
 
 ```
 
-### For use with Green Genes:
+#### For use with Green Genes:
 ```{r}
 
 taxa <- assignTaxonomy(seqtab.nochim, paste0(path, "gg_13_8_train_set_97.fa.gz"))
@@ -239,4 +237,4 @@ class(taxa)
 
 ```
 
-## End of DADA2 script. Now you have an amplicon sequence variants (ASV, not to be confused with an OTU table!), and a taxa table. This results can now be imported into `phyloseq` for further analyses.
+### End of DADA2 script. Now you have an amplicon sequence variants (ASV, not to be confused with an OTU table!), and a taxa table. This results can now be imported into `phyloseq` for further analyses.
