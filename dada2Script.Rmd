@@ -9,6 +9,11 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+citation("dada2")
+```
+
+
 ### Before starting 
 
 * DADA2 takes demultiplexed an cleansed (primers, barcodes removed) data. Go to <http://benjjneb.github.io/dada2/tutorial.html> for more information and installation instructions.
