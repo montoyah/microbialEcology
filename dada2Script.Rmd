@@ -1,0 +1,242 @@
+---
+title: "16S rRNA amplicon gene sequencing with DADA2"
+author: "Oscar Montoya, M.Sc."
+date: "May 1, 2015"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Before starting 
+
+* DADA2 takes demultiplexed an cleansed (primers, barcodes removed) data. Go to <http://benjjneb.github.io/dada2/tutorial.html> for more information and installation instructions.
+
+
+## Saving sessionn and individual objects
+
+Analysis of big datasets can take several hours (even days) depending on the computational resources available. As R (as any othe software) can uxpectedly crash, it is a good idea to use the `save.image()` function to create restatouration points (bakcups) of the seesion during different stages of the analysis. In particular, adding `save.image()` after runnind `dada()`, `assignTaxonomy()`, and after construting a pyogenetic tree is advisable based on how long these functions can take to run. Consider adding date and a=giveing a meaningful name to the session to save for future reference. Saved sessions can be loaded afterwards via `loadRSD()`
+
+Individual objects, like dataframes and graphics, can be individualy saved. See `saveRDS()` and `readRDS` for a more detailed use oh these functions. 
+
+```{r}
+?save.image
+?load
+?saveRDS
+?readRDS
+```
+
+## Getting environment ready
+
+```{r}
+rm(list=ls(all=T))
+source("http://bioconductor.org/biocLite.R")
+
+# If during package installation you get "Warning message: installed directory not writable, cannot update packages", run R as sudo and then biocLite("BiocUpgrade")
+```
+
+### Some dependencies conflicts and errors may appear during packages installation. Follow the troubleshooting steps listed below, if needed.
+```{r}
+
+#biocLite(suppressUpdates = FALSE)
+#biocLite("ShortRead", suppressUpdates = FALSE) #No errors
+
+#biocLite('Hmisc') #; install.packages("Hmisc") #Can't install Hmisc (April 5, 2016)
+
+#biocLite("limma") #Limma not installed by the above code. Installed manueally, was succesful 
+#biocLite("Rcpp")
+
+#biocLite('phyloseq')
+#biocLite('ape') #install.packages('ape') #Can't install ape and phyloseq requires it
+
+#install.packages('phyloseq')
+```
+
+#### Problems installing "devtools" (to work with Github)
+
+Run the following two lines in shell if can't install "devtools" package (http://stackoverflow.com/questions/20923209/problems-installing-the-devtools-package)
+```{r}
+#apt-get -y build-dep libcurl4-gnutls-dev
+#apt-get -y install libcurl4-gnutls-dev
+#install.packages("devtools") #Succesfull resintallation
+
+##################### Notes ############################
+```
+
+
+## Load packages:
+
+```{r}
+#install.packages('devtools')
+library("devtools")
+#devtools::install_github("benjjneb/dada2") #No errors during installation
+#biocLite('dada2')
+library(dada2); packageVersion("dada2")
+#biocLite('Rcpp')
+#library(Rcpp); packageVersion('phyloseq')
+#biocLite('phyloseq') #; install.packages('phyloseq')
+library(phyloseq); packageVersion('phyloseq')
+library(ShortRead); packageVersion("ShortRead")
+library(ggplot2); packageVersion("ggplot2")
+library(dplyr); packageVersion("dplyr")
+
+```
+
+
+## Calling fastq files to start analysis
+```{r}
+
+path <-'path/to/Files/fastq/'
+
+dir()
+
+fns <- list.files(path)
+fns
+
+fastqs <- fns[grepl(".fastq$", fns)]
+fastqs <- sort(fastqs) # Sort ensures forward/reverse reads are in same order
+fnFs <- fastqs[grepl("_R1", fastqs)]
+fnRs <- fastqs[grepl("_R2", fastqs)]
+
+# Get sample names from the first part of the forward read filenames
+sample.names <- sapply(strsplit(fnFs, "_"), `[`, 1)
+
+# Fully specify the path for the fnFs and fnRs
+fnFs <- paste0(path, fnFs)
+fnRs <- paste0(path, fnRs)
+```
+
+## Quality of the reads
+```{r, eval=FALSE}
+
+plotQualityProfile(fnFs[[1]]) + ggtitle('Forward')
+
+for (fnF in fnFs){
+ 
+  qqF <- plotQualityProfile(fnF) + ggtitle('Forward')
+  print(qqF, main = 'Forward')
+}
+
+for (fnR in fnRs){
+  qqR <- plotQualityProfile(fnR) + ggtitle('Reverse')
+  print(qqR, main = 'Reverse')
+}
+
+
+```
+
+
+## Filtering and trimming
+According to Xiaoli, doing merging of the reads before filtering and trimming avoids having to define how many nuceleotides to cut, based on the quality plots (DADA2 way is, first trimming and filtering, then merging.). Xiaoli does contol during the merging step by the number of errors allowed during the overlap. 
+
+```{r}
+
+# Make directory and filenames for the filtered fastqs
+
+??fastqPairedFilter
+
+filtFs <- paste0(path, sample.names, "_F_filt.fastq.gz")
+filtRs <- paste0(path, sample.names, "_R_filt.fastq.gz")
+
+for(i in seq_along(fnFs)) {
+  fastqPairedFilter(c(fnFs[i], fnRs[i]), c(filtFs[i], filtRs[i]),
+                    trimLeft=c(10), truncLen=c(280,250), 
+                    maxN=0, maxEE=2, rm.phix=TRUE, 
+                    compress = TRUE, verbose = TRUE) 
+  #phix control concept: http://www.illumina.com/products/phix_control_v3.html
+                    
+}
+
+
+
+```
+
+## Deriplicating the filtered (reduce computational time)
+```{r}
+
+derepFs <- derepFastq(filtFs, verbose=TRUE)
+derepRs <- derepFastq(filtRs, verbose=TRUE)
+
+# Name the derep-class objects by the sample names
+names(derepFs) <- sample.names
+names(derepRs) <- sample.names
+
+#Inspect the derep-class object returned by derepFastq:
+
+derepFs[[1]] 
+
+```
+
+
+## Sample inference
+```{r}
+
+dadaFs <- dada(derepFs, err=NULL, selfConsist = TRUE, pool = TRUE, multithread = TRUE) #err=inflateErr(tperr1,3)
+
+dadaRs <- dada(derepRs, err=NULL, selfConsist = TRUE, pool = TRUE, multithread = TRUE) #err=inflateErr(tperr1,3)
+
+dadaFs[[1]]
+
+plotErrors(dadaFs[[1]], nominalQ=TRUE)
+
+```
+
+## Merge of pair reads
+
+```{r}
+
+mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE, minOverlap = 20)
+
+head(mergers[[1]])
+```
+
+## Constructing a sequence table
+
+```{r}
+
+seqtab <- makeSequenceTable(mergers[names(mergers) != "Mock"]) # Exclude the mock community (if yo have one)
+
+dim(seqtab)
+table(nchar(colnames(seqtab)))
+
+```
+
+## Chimeras removal
+
+```{r}
+
+seqtab.nochim <- removeBimeraDenovo(seqtab, verbose=TRUE)
+dim(seqtab.nochim)
+sum(seqtab.nochim)/sum(seqtab) # Inference the percentage of chimeras
+
+```
+
+## Assign taxonomy
+
+Adjust the code below according to the database of your prerence. Trained dataset can be downloaded from <http://benjjneb.github.io/dada2/training.html>.
+
+### For use with RDP or SIlva: 
+```{r}
+
+
+taxa <- assignTaxonomy(seqtab.nochim, 'path/to/refereceDataset/silva_nr_vXXX_train_set.fa.gz') # or rdp_train_set_14.fa.gz
+
+colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus")
+unname(head(taxa, 15))
+class(taxa)
+
+```
+
+### For use with Green Genes:
+```{r}
+
+taxa <- assignTaxonomy(seqtab.nochim, paste0(path, "gg_13_8_train_set_97.fa.gz"))
+colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+unname(head(taxa, 15))
+class(taxa)
+
+
+```
+
+## End of DADA2 script. Now you have an amplicon sequence variants (ASV, not to be confused with an OTU table!), and a taxa table. This results can now be imported into `phyloseq` for further analyses.
