@@ -41,7 +41,7 @@ source("http://bioconductor.org/biocLite.R")
 # If during package installation you get "Warning message: installed directory not writable, cannot update packages", run R as sudo and then biocLite("BiocUpgrade")
 ```
 
-#### Some dependencies conflicts and errors may appear during packages installation. Follow the troubleshooting steps listed below, if needed.
+#### The installation of some packages and their dependencies may throw erros. Follow the troubleshooting steps listed below, if needed.
 ```{r}
 
 #biocLite(suppressUpdates = FALSE)
