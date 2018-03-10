@@ -1,2 +1,2 @@
 # microbialEcology
-Scripts for microbial ecology in R
+Scripts for microbial ecology in R.
