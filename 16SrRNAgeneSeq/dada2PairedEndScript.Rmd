@@ -16,7 +16,7 @@ citation("dada2")
 
 ### Before starting
 
-* DADA2 takes demultiplexed an cleansed (primers, barcodes removed) data. Go to <http://benjjneb.github.io/dada2/tutorial.html> for more information and installation instructions.
+* DADA2 takes demultiplexed an cleansed (primers, barcodes removed) data. Go to <http://benjjneb.github.io/dada2/tutorial.html> for more information on the pipeline and installation instructions.
 
 
 ### Saving sessionn and individual objects
