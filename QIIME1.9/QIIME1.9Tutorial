@@ -1,1 +1,14 @@
+# Construct contigs
+multiple_join_paired_ends.py -i /path/to/files.fastq.gz -o /path/to/write/1_contigs/ -p /path/to/pairingParameters.txt
 
+# Quality control
+multiple_split_libraries_fastq.py -i /path/to/1_contigs/ -o /path/to/write/2_qualityControl -p /path/to/multiple_split_libraries.txt --include_input_dir_path --remove_filepath_in_name
+
+# Make OTUs and assign taxonomy
+pick_open_reference_otus.py -i /path/to/2_qualityControl/seqs.fna -o /path/to/write/3_picked_otus -p /path/to/open_ref_otus_parameters_silva128.txt -a -O 5 -f
+
+# Get per-sample summary stats
+biom summarize-table -i /path/to/3_picked_otus/otu_table_mc2.biom -o /path/to/4_biomSummary/otu_table_mc2_summary_stats.txt
+
+# Transform OTU/taxa table (otu_table_mc2.biom) into .csv
+biom convert -i /path/to/3_picked_otus/otu_table_mc2_w_tax.biom  -o /path/to/3_picked_otus/otu_table_mc2_w_tax.csv --to-tsv --header-key taxonomy
