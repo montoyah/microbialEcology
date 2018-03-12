@@ -1,0 +1,2 @@
+beta_diversity:metrics bray_curtis,euclidean,unweighted_unifrac,weighted_unifrac
+alpha_diversity:metrics PD_whole_tree,observed_species,chao1,shannon,simpson,simpson_e
