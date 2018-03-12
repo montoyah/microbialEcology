@@ -1,0 +1,6 @@
+align_seqs.py:template_fp /home/oscar/Documents/16S_reference_datasets/Silva_119_qiime/Silva119_release_aligned_rep_files/90/Silva_119_rep_set90_aligned.fna
+assign_taxonomy:id_to_taxonomy_fp /home/oscar/Documents/16S_reference_datasets/Silva_119_qiime/Silva_119_release/Silva119_release/taxonomy/97/taxonomy_97_all_levels.txt
+assign_taxonomy:reference_seqs_fp /mnt/data/taxonomyReferenceDatabases/SILVA_128_QIIME_release/rep_set/rep_set_all/97/97_otus.fasta
+
+
+
