@@ -25,7 +25,7 @@
 #BSUB -o jobName_%J.out
 
 
-source activate qiime1
+source activate qiime1 #assuming you have a conda environment called qiime1 (see http://qiime.org/install/install.html)
 
 path=/path/to/folder # This path contains the directories "cutadapt_results" (or quivalent quality controled data),
 # "1_contigs", "2_qualityControl", "3_pickedOTUs"
