@@ -1,4 +1,4 @@
-# This example used SILVA version 119 (2014) formated for QIIME use
+# This example uses SILVA version 119 (2014) formated for QIIME use
 
 align_seqs.py:template_fp /Silva_119_qiime/Silva119_release_aligned_rep_files/90/Silva_119_rep_set90_aligned.fna
 assign_taxonomy:id_to_taxonomy_fp /Silva_119_qiime/Silva_119_release/Silva119_release/taxonomy/97/taxonomy_97_all_levels.txt
